@@ -26,7 +26,12 @@ function csvStringToObject(str) {
 }
 
 router.post('/:resources/:id?', async (req, res) => {
-    let { resources, id } = req.params;
+    let { resources, id, } = req.params;
+    let { sort, filter, page, perPage } = req.body
+
+    // sort, // field: string, order: string
+    //filter, // [k: string]: any
+    //pagination, // page: number, perPage: number
 
     if (resources === "wc-orders") {
         try {
@@ -46,8 +51,11 @@ router.post('/:resources/:id?', async (req, res) => {
                 consumerSecret: consumer_secret,
                 version: "wc/v2",
             });
+            page = page ?? 1
+            perPage = page ?? 5
             return api.get(resources.slice(3), {
-                per_page: 5, // 20 products per page
+                page: page,
+                per_page: perPage,
             })
                 .then((response) => {
                     // Successful request
@@ -61,7 +69,7 @@ router.post('/:resources/:id?', async (req, res) => {
                         'Access-Control-Expose-Headers': ['Content-Range', 'X-Total-Count'],
                         'Access-Control-Allow-Methods': '*',
                         'X-Total-Count': total,
-                        'Content-Range': `${resources}:${0}-${10}/${total}`
+                        'Content-Range': `${resources}:${page}-${perPage}/${total}`
                     });
                     res.status(200).send(data)
                 })
@@ -133,7 +141,11 @@ router.post('/:resources/:id?', async (req, res) => {
 
             let { access_token } = req.body
 
-            const url = `${fortnoxApiUrl}/${resources}/` + (id ? id : `?limit=1&page=1`)
+            page = perPage ?? 1
+            perPage = perPage ?? 5
+
+            let url = `${fortnoxApiUrl}/${resources}/` + (id ? id : "")
+            url += `?limit=${perPage}&page=${page}`;
 
             const { data } = await axios({
                 method: 'GET',
@@ -147,16 +159,20 @@ router.post('/:resources/:id?', async (req, res) => {
                 }
             })
 
-            console.log({ data })
             let resourcesDataType = capitalizeFirstLetter(resources)
 
-            let totalCount = data[resourcesDataType].count
+            let totalCount = data[resourcesDataType].count ?? 0;
+
+            let totalResources = data.MetaInformation["@TotalResources"]
+            let totalPages = data.MetaInformation["@TotalPages"]
+            let currentPage = data.MetaInformation["@CurrentPage"]
+            console.log({ data })
 
             res.set({
                 'Access-Control-Expose-Headers': ['Content-Range', 'X-Total-Count'],
                 'Access-Control-Allow-Methods': '*',
                 'X-Total-Count': totalCount,
-                'Content-Range': `${resources}:${0}-${10}/${totalCount}`
+                'Content-Range': `${resources}:${currentPage}-${totalPages}/${totalResources}`
             });
 
             data[resourcesDataType].forEach((dataItem, index) => dataItem.id = index)
