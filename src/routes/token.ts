@@ -9,6 +9,12 @@ const router = Router();
 
 router.post("/token", async (req, res) => {
   try {
+    if (!FORTNOX_CLIENT_ID || !FORTNOX_CLIENT_SECRET) {
+      throw new Error(
+        "Missing 'FORTNOX_CLIENT_(ID/SECRET)' in environment variables"
+      );
+    }
+
     if (!req.body.code) {
       return res.status(400).send({ error: "Param `code` is missing" });
     }
@@ -16,6 +22,7 @@ router.post("/token", async (req, res) => {
     if (!req.body.grant_type) {
       return res.status(400).send({ error: "Param `grant_type` is missing" });
     }
+
     const { code, grant_type, redirect_uri } = req.body;
 
     const authTokenUri = "https://apps.fortnox.se/oauth-v1/token";
@@ -49,7 +56,7 @@ router.post("/token", async (req, res) => {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
         "Access-Control-Allow-Origin": "*",
-        Authorization: authHeader(FORTNOX_CLIENT_ID!, FORTNOX_CLIENT_SECRET!),
+        Authorization: authHeader(FORTNOX_CLIENT_ID, FORTNOX_CLIENT_SECRET),
       },
     });
 

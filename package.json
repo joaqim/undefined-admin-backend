@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "nodemon ./dist/server.js"
+    "start": "nodemon ./dist/server.js",
+    "dev": "tsc --watch & nodemon ./dist/server.js"
   },
   "dependencies": {
     "@woocommerce/woocommerce-rest-api": "^1.0.1",

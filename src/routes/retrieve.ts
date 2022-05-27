@@ -1,10 +1,24 @@
 const WooCommerceRestApi = require("@woocommerce/woocommerce-rest-api").default;
+// import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
 import { Router } from "express";
-const axios = require("axios");
-const os = require("os");
+import axios from "axios";
+import os from "os";
+import createURL from "../utils/createURL";
+
+import { Article, Customer, Invoice } from "findus";
+import { sendFortnoxData as returnFortnoxData } from "../utils/fortnoxUtils";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const fortnoxApiUrl = "https://api.fortnox.se/3";
 const { FORTNOX_CLIENT_SECRET } = process.env;
+
+const FORTNOX_DEFAULT_HEADERS = {
+  "Client-Secret": FORTNOX_CLIENT_SECRET,
+  "Content-Type": "application/json",
+  Accept: "application/json",
+};
 
 const router = Router();
 
@@ -27,19 +41,26 @@ type WooCommerceError = {
     data: any;
   };
 };
+type Resources = "invoices";
 
-router.post("/:resources/:id?", async (req, res) => {
-  let { resources, id } = req.params;
+type TitleCase<T extends string, D extends string = " "> = string extends T
+  ? never
+  : T extends `${infer F}${D}${infer R}`
+  ? `${Capitalize<F>}${D}${TitleCase<R, D>}`
+  : Capitalize<T>;
+
+router.post("/retrieve/:resources/:id?", async (req, res) => {
+  let { resources, id }: { resources?: string; id?: string } = req.params;
   let {
     sort,
     filter,
     page,
     perPage,
   }: {
-    sort: { field: string; order: "ASC" | "DEC" };
-    filter: Record<string, any>;
-    page: number;
-    perPage: number;
+    sort?: { field: string; order: "ASC" | "DEC" };
+    filter?: Record<string, any>;
+    page?: string;
+    perPage?: string;
   } = req.body;
 
   // sort, // field: string, order: string
@@ -48,7 +69,15 @@ router.post("/:resources/:id?", async (req, res) => {
 
   if (resources === "wc-orders") {
     try {
-      let { consumer_key, consumer_secret, storefront_url } = req.body;
+      let {
+        consumer_key,
+        consumer_secret,
+        storefront_url,
+      }: {
+        consumer_key?: string;
+        consumer_secret?: string;
+        storefront_url?: string;
+      } = req.body;
       if (!consumer_key) {
         return res
           .status(400)
@@ -70,8 +99,6 @@ router.post("/:resources/:id?", async (req, res) => {
         consumerSecret: consumer_secret,
         version: "wc/v2",
       });
-      page = page ?? 1;
-      perPage = page ?? 5;
 
       return api
         .get(resources.slice(3), {
@@ -162,47 +189,37 @@ router.post("/:resources/:id?", async (req, res) => {
           .send({ error: "Param `access_token` is missing" });
       }
 
-      let { access_token } = req.body;
+      const { access_token } = req.body;
 
-      page = perPage ?? 1;
-      perPage = perPage ?? 5;
-
-      let url = `${fortnoxApiUrl}/${resources}/` + (id ? id : "");
-      url += `?limit=${perPage}&page=${page}`;
+      const url = createURL(fortnoxApiUrl, resources, {
+        id,
+        page,
+        limit: perPage,
+      });
 
       const { data } = await axios({
         method: "GET",
         url,
         headers: {
+          ...FORTNOX_DEFAULT_HEADERS,
           "Access-Control-Allow-Origin": "*",
           Authorization: `Bearer ${access_token}`,
-          "Client-Secret": FORTNOX_CLIENT_SECRET,
-          "Content-Type": "application/json",
-          Accept: "application/json",
         },
       });
-
-      let resourcesDataType = capitalizeFirstLetter(resources);
-
-      let totalCount = data[resourcesDataType].count ?? 0;
-
-      let totalResources = data.MetaInformation["@TotalResources"];
-      let totalPages = data.MetaInformation["@TotalPages"];
-      let currentPage = data.MetaInformation["@CurrentPage"];
-      console.log({ data });
-
-      res.set({
-        "Access-Control-Expose-Headers": ["Content-Range", "X-Total-Count"],
-        "Access-Control-Allow-Methods": "*",
-        "X-Total-Count": totalCount,
-        "Content-Range": `${resources}:${currentPage}-${totalPages}/${totalResources}`,
-      });
-
-      data[resourcesDataType].forEach(
-        (dataItem: { id?: number }, index: number) => (dataItem.id = index)
-      );
-
-      res.status(200).send(data);
+      switch (resources) {
+        case "invoices":
+          return returnFortnoxData<Invoice[]>(data, "Invoices", res);
+        case "articles":
+          return returnFortnoxData<Article[]>(data, "Articles", res);
+        case "orders":
+          throw new Error("Fortnox Orders are not supported yet");
+        // return returnFortnoxData<Order[]>(data, "Orders", res);
+        case "customers":
+          return returnFortnoxData<Customer[]>(data, "Customers", res);
+        default:
+          throw new Error(`Unsupported resource: ${resources}`);
+          break;
+      }
     } catch (error) {
       console.log(`An error occurred GET /:resources/:id? :`, error);
       return res.status(500).send(error);
