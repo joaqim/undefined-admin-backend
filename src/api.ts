@@ -4,6 +4,7 @@ import express from "express";
 const app = express();
 
 import retrieve from "./routes/retrieve";
+import action from "./routes/action";
 import update from "./routes/update";
 import token from "./routes/token";
 
@@ -22,6 +23,7 @@ app.use(
 
 app.use(cors());
 app.use(token, retrieve);
+app.use(token, action);
 app.use(token, update);
 
 export default app;

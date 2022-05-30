@@ -3,22 +3,14 @@ const WooCommerceRestApi = require("@woocommerce/woocommerce-rest-api").default;
 import { Router } from "express";
 import axios from "axios";
 import os from "os";
+import fs from "fs";
 import createURL from "../utils/createURL";
 
 import { Article, Customer, Invoice } from "findus";
-import { sendFortnoxData as returnFortnoxData } from "../utils/fortnoxUtils";
-
-import dotenv from "dotenv";
-dotenv.config();
-
-const fortnoxApiUrl = "https://api.fortnox.se/3";
-const { FORTNOX_CLIENT_SECRET } = process.env;
-
-const FORTNOX_DEFAULT_HEADERS = {
-  "Client-Secret": FORTNOX_CLIENT_SECRET,
-  "Content-Type": "application/json",
-  Accept: "application/json",
-};
+import { sendBackFortnoxData } from "../utils/fortnoxUtils";
+import { FORTNOX_API_URL, FORTNOX_DEFAULT_HEADERS } from "../common";
+import Axios from "axios";
+import { Blob } from "buffer";
 
 const router = Router();
 
@@ -50,7 +42,8 @@ type TitleCase<T extends string, D extends string = " "> = string extends T
   : Capitalize<T>;
 
 router.post("/retrieve/:resources/:id?", async (req, res) => {
-  let { resources, id }: { resources?: string; id?: string } = req.params;
+  // let { resources, id }: { resources?: string; id?: string } = req.params;
+  let { resources, id } = req.params;
   let {
     sort,
     filter,
@@ -138,6 +131,41 @@ router.post("/retrieve/:resources/:id?", async (req, res) => {
       console.log("An error occurred POST /wc-orders :", error);
       return res.status(500).send(error);
     }
+  } else if (resources === "pdf") {
+    const { documentLink }: { documentLink?: string } = req.body;
+    console.log(req.body);
+    if (!documentLink) {
+      return res
+        .status(400)
+        .send({ error: "Param 'documentLink' is missing from body." });
+    }
+
+    let { data }: { data: any } = await Axios({
+      method: "GET",
+      url: documentLink,
+      headers: {
+        Accept: "application/pdf",
+      },
+      responseType: "arraybuffer",
+      //responseType: "blob",
+    });
+    if (!data) {
+      return res
+        .status(400)
+        .send({ error: "Failed to retrieve InvoiceDocument" });
+    }
+
+    let buffer = Buffer.from(data);
+
+    res.set({
+      "Cache-Control": "public",
+      "Content-Type": "application/pdf",
+      "Content-Length": buffer.length,
+      "Content-Transfer-Encoding": "binary",
+      "Accept-Ranges": "bytes",
+    });
+
+    return res.status(200).send(data);
   } else if (resources === "currency") {
     try {
       if (!req.body.currency) {
@@ -191,7 +219,7 @@ router.post("/retrieve/:resources/:id?", async (req, res) => {
 
       const { access_token } = req.body;
 
-      const url = createURL(fortnoxApiUrl, resources, {
+      const url = createURL(FORTNOX_API_URL, resources, {
         id,
         page,
         limit: perPage,
@@ -208,14 +236,14 @@ router.post("/retrieve/:resources/:id?", async (req, res) => {
       });
       switch (resources) {
         case "invoices":
-          return returnFortnoxData<Invoice[]>(data, "Invoices", res);
+          return sendBackFortnoxData<Invoice[]>(data, "Invoices", res);
         case "articles":
-          return returnFortnoxData<Article[]>(data, "Articles", res);
+          return sendBackFortnoxData<Article[]>(data, "Articles", res);
         case "orders":
           throw new Error("Fortnox Orders are not supported yet");
         // return returnFortnoxData<Order[]>(data, "Orders", res);
         case "customers":
-          return returnFortnoxData<Customer[]>(data, "Customers", res);
+          return sendBackFortnoxData<Customer[]>(data, "Customers", res);
         default:
           throw new Error(`Unsupported resource: ${resources}`);
           break;

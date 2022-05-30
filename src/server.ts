@@ -11,8 +11,6 @@ const { FORTNOX_CLIENT_ID, FORTNOX_CLIENT_SECRET } = process.env;
 if (!FORTNOX_CLIENT_ID) throw new Error("Missing env: 'FORTNOX_CLIENT_ID'");
 if (!FORTNOX_CLIENT_SECRET) throw new Error("Missing env: 'FORTNOX_CLIENT_SECRET'");
 
-console.log(process.env)
-
 console.info("Starting API setup...");
 
 const port = normalizePort(process.env.PORT ?? 8080);

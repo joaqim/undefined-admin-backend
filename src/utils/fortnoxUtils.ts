@@ -9,7 +9,7 @@ export type FortnoxData<Resource, ResourceKey extends string> = Record<
   Resource
 > & { MetaInformation?: FortnoxMetaInformation };
 
-export const sendFortnoxData = <Resource /* , ResourceKey extends string */>(
+export const sendBackFortnoxData = <Resource /* , ResourceKey extends string */>(
   data: any, // FortnoxData<Resource, ResourceKey>,
   resourceKey: string,
   res: any
