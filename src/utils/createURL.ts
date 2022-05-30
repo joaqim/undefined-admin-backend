@@ -1,7 +1,18 @@
+import { Resources } from "../fortnox/interfaces/resources.interface";
+
+const FortnoxApiResourceLookup: Record<Resources, string> = {
+  Invoice: "invoices",
+  Invoices: "invoices",
+  Article: "articles",
+  Articles: "articles",
+  Customer: "customers",
+  Customers: "customers",
+};
+
 const createURL = (
   url: string,
-  resources: string,
-  parameters?: Record<string, string | undefined> & {
+  resources: Resources,
+  parameters?: Record<string, string | number | undefined> & {
     id?: string;
     action?: string;
   }
@@ -12,7 +23,10 @@ const createURL = (
   if (parameters) {
     let filteredParams: Record<string, string> = {};
     for (let key in parameters) {
-      const value = parameters[key];
+      const value = typeof (parameters[key] != "number")
+        ? parameters[key]?.toString()
+        : (parameters[key] as string);
+
       if (value) {
         if (key === "id") {
           id = value;
@@ -26,7 +40,10 @@ const createURL = (
     queryString = "?" + new URLSearchParams(filteredParams).toString();
     if (action) queryString += `/${action}`;
   }
-  return `${url}/${resources}/${id}${queryString}`;
+
+  const resource = FortnoxApiResourceLookup[resources];
+
+  return `${url}/${resource}/${id}${queryString}`;
 };
 
 export default createURL;

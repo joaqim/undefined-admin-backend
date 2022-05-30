@@ -133,7 +133,6 @@ router.post("/retrieve/:resources/:id?", async (req, res) => {
     }
   } else if (resources === "pdf") {
     const { documentLink }: { documentLink?: string } = req.body;
-    console.log(req.body);
     if (!documentLink) {
       return res
         .status(400)
@@ -147,12 +146,11 @@ router.post("/retrieve/:resources/:id?", async (req, res) => {
         Accept: "application/pdf",
       },
       responseType: "arraybuffer",
-      //responseType: "blob",
     });
     if (!data) {
       return res
         .status(400)
-        .send({ error: "Failed to retrieve InvoiceDocument" });
+        .send({ error: `Failed to retrieve PDF, check url: ${documentLink}` });
     }
 
     let buffer = Buffer.from(data);

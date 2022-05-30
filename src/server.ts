@@ -4,17 +4,27 @@
  * Module dependencies.
  */
 
+import debug from "debug";
 import http, { Server } from "http";
-import app from "./api";
+import app from "./app";
+import { CommonRoutesConfig } from "./common/common.routes.config";
+import createRoutes from "./createRoutes";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const { FORTNOX_CLIENT_ID, FORTNOX_CLIENT_SECRET } = process.env;
 if (!FORTNOX_CLIENT_ID) throw new Error("Missing env: 'FORTNOX_CLIENT_ID'");
-if (!FORTNOX_CLIENT_SECRET) throw new Error("Missing env: 'FORTNOX_CLIENT_SECRET'");
+if (!FORTNOX_CLIENT_SECRET)
+  throw new Error("Missing env: 'FORTNOX_CLIENT_SECRET'");
 
 console.info("Starting API setup...");
 
 const port = normalizePort(process.env.PORT ?? 8080);
 
+const debugLog: debug.IDebugger = debug("app");
+
+let routes = createRoutes(app);
 let server = http.createServer(app);
 
 /**
@@ -68,6 +78,11 @@ function onError(error: { syscall: string; code: any }) {
 }
 
 app.set("port", port);
-server.listen(port);
+//server.listen(port);
+server.listen(port, () => {
+  routes.forEach((route: CommonRoutesConfig) => {
+    debugLog(`Routes configured for ${route.getName()}`);
+  });
+});
 server.on("error", onError);
 server.on("listening", () => onListening(server));

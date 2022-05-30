@@ -99,6 +99,6 @@
     "skipLibCheck": true,                                /* Skip type checking all .d.ts files. */
     "outDir": "./dist",
     "rootDir": "./src"
-
-  }
+  },
+  "exclude": ["./src/routes"]
 }
