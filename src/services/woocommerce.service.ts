@@ -14,6 +14,7 @@ export interface WooGetManyParams {
 
 export interface WooGetOneParams {
   id: string;
+  status: string;
 }
 
 class WooCommerceService {
@@ -31,14 +32,17 @@ class WooCommerceService {
       version: "wc/v2",
     });
 
-    const { id } = params;
-    if (id) return api.get(resources, { id });
+    const { id, status } = params;
+    if (id) return api.get(resources, { id, status });
 
     if (resources === "Orders") {
-      const { page, perPage } = params as WooGetManyParams;
+      const { page, perPage, dateFrom, dateTo } = params as WooGetManyParams;
       return api.get(resources, {
         page: page,
         per_page: perPage,
+        date_to: dateTo,
+        date_from: dateFrom,
+        status,
       });
     }
   }
@@ -49,14 +53,13 @@ class WooCommerceService {
     consumerSecret: string,
     params: WooGetManyParams
   ) => {
-    const { data } = await this.get(
+    return await this.get(
       "Orders",
       storeUrl,
       consumerKey,
       consumerSecret,
       params
     );
-    return data;
   };
 }
 

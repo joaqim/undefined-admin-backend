@@ -12,22 +12,80 @@ const { FORTNOX_REDIRECT_URI } = process.env;
 
 const log: debug.IDebugger = debug("app:fortnox-middleware");
 class FortnoxMiddleware {
+  public async extractQuery(req: Request, res: Response, next: NextFunction) {
+    const { access_token, page, perPage, limit, filter } = req.query;
 
-  public async extractParams(req: Request, res: Response, next: NextFunction) {
-    const { page, perPage, limit, filter } = req.params;
+    req.body.access_token = access_token;
     req.body.page = page ?? 1;
-    req.body.limit = limit ?? perPage;
+    req.body.limit = limit ?? perPage ?? 5;
+
     // TODO: will this be used?
     req.body.per_page = req.body.limit;
+
     req.body.filter = filter;
 
-    const id = req.body.id;
-    const resources = capitalizeFirstLetter(
-      req.body.resources ?? req.params.resources
-    ) as Resources;
+    const resources = capitalizeFirstLetter(req.params.resources) as Resources;
+
+    const id = req.params.id
     // Renames "Invoices" to "Invoice" if it is a request with specific ID
     req.body.resources = id ? singularResource(resources) : resources;
     req.body.id = id;
+
+    console.log({ params: req.params });
+    console.log({ body: req.body });
+    next();
+  }
+
+  public async validateUpdateResourceParams(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const { resources, id, data } = req.body;
+    if (!id) {
+      return res
+        .status(400)
+        .send({ error: `Param 'id' missing for updating ${resources}` });
+    }
+    if (!data) {
+      return res
+        .status(400)
+        .send({ error: `Param 'data' missing for updating ${resources}` });
+    }
+
+    if (!data[resources]) {
+      return res.status(400).send({
+        error: `Invalid 'data' for updating ${resources}, expected: 'data: {"${resources}": {...}}'`,
+      });
+    }
+
+    next();
+  }
+
+  public async validateCreateResourceParams(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const { resources, id, data } = req.body;
+
+    if (id) {
+      return res
+        .status(400)
+        .send({ error: `Unexpecte param 'id' for creating ${resources}` });
+    }
+
+    if (!data) {
+      return res
+        .status(400)
+        .send({ error: `Param 'data' missing for creating ${resources}` });
+    }
+
+    if (!data[resources]) {
+      return res.status(400).send({
+        error: `Invalid 'data' for creating ${resources}, expected: 'data: {"${resources}": {...}}'`,
+      });
+    }
     next();
   }
 
@@ -36,7 +94,8 @@ class FortnoxMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    const resources = req.body.resources ?? req.params.resources;
+    const resources = req.params.resources;
+
     if (!ValidResources.includes(capitalizeFirstLetter(resources) as Resources))
       return res
         .status(400)
@@ -44,19 +103,20 @@ class FortnoxMiddleware {
 
     next();
   }
-  public async validateAccessToken(
+  public async validateAccessTokenParams(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
-    let { access_token } = req.body;
+    const access_token = req.body.access_token ?? req.query.access_token;
+
     if (!access_token) {
       return res.status(400).send({ error: "Param 'access_token' is missing" });
     }
     next();
   }
 
-  public async validateAuthenticationCode(
+  public async validateAuthenticationParams(
     req: Request,
     res: Response,
     next: NextFunction

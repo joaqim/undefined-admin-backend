@@ -3,8 +3,21 @@ import {
   Resources,
   ValidResources,
 } from "../interfaces/woocommerce/resources.interface";
+import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 
 class WooCommerceMiddleware {
+  public async extractParams(req: Request, res: Response, next: NextFunction) {
+    const { resources, id } = req.params;
+
+    req.body.id = id;
+    req.body.resources = capitalizeFirstLetter(resources);
+
+    console.log({ params: req.params });
+    console.log({ body: req.body });
+
+    next();
+  }
+
   public async validateValidResource(
     req: Request,
     res: Response,
@@ -15,7 +28,6 @@ class WooCommerceMiddleware {
       return res
         .status(400)
         .send({ error: `Not a valid WooCommerce resource: ${resources}` });
-    console.log(`Valid resource: ${resources}`)
     next();
   }
 
@@ -36,9 +48,11 @@ class WooCommerceMiddleware {
         .status(400)
         .send({ error: "Param `storefront_url` is missing" });
     }
+
     if (!consumer_key) {
       return res.status(400).send({ error: "Param `consumer_key` is missing" });
     }
+
     if (!consumer_secret) {
       return res
         .status(400)
@@ -73,7 +87,7 @@ class WooCommerceMiddleware {
         }
         if (!date_to) {
           return res.status(400).send({
-            error: `Param 'date_from' is required for fetching multiple ${resources}`,
+            error: `Param 'date_to' is required for fetching multiple ${resources}`,
           });
         }
       }

@@ -10,10 +10,37 @@ import {
 } from "../../interfaces/fortnox/resources.interface";
 
 import rateLimiter from "../../utils/RateLimiter";
+import { arrayBuffer } from "stream/consumers";
 
 const log: debug.IDebugger = debug("app:invoices-controller");
 class InvoicesController {
-  public static async getResources(req: Request, res: Response) {
+  private static resourcesIntoData(
+    resources: Resources,
+    data: unknown[] | unknown
+  ) {
+    if (Array.isArray(data)) {
+      let dataArray: unknown[] = [];
+      if (resources === "Invoices") {
+        dataArray = (data as Invoice[]).map((value) => {
+          return { ...value, id: value.DocumentNumber };
+        });
+      } else if (resources === "Customers") {
+        dataArray = (data as Customer[]).map((value) => {
+          return { ...value, id: value.CustomerNumber };
+        });
+      } else if (resources === "Articles") {
+        dataArray = (data as Article[]).map((value) => {
+          return { ...value, id: value.ArticleNumber };
+        });
+      }
+
+      return { data: dataArray, total: data.length };
+    } else {
+      return { data, total: 1 };
+    }
+  }
+
+  public static getResources = async (req: Request, res: Response) => {
     const { access_token, resources, page, limit, id, filter, order, sort } =
       req.body;
     // await rateLimiter.SleepAsNeeded();
@@ -35,24 +62,8 @@ class InvoicesController {
       }
     );
 
-    let dataArray: unknown[] = [];
-
-    if (resources === "Invoices") {
-      dataArray = (data as Invoice[]).map((value) => {
-        return { ...value, id: value.DocumentNumber };
-      });
-    } else if (resources === "Customers") {
-      dataArray = (data as Customer[]).map((value) => {
-        return { ...value, id: value.CustomerNumber };
-      });
-    } else if (resources === "Articles") {
-      dataArray = (data as Article[]).map((value) => {
-        return { ...value, id: value.ArticleNumber };
-      });
-    }
-
-    res.status(200).send({ data: dataArray, total: data.length, meta });
-  }
+    res.status(200).send({ ...this.resourcesIntoData(resources, data), meta });
+  };
 
   public static async token(req: Request, res: Response) {
     let { code, refresh_token, grant_type, redirect_uri } = req.body;
@@ -67,6 +78,37 @@ class InvoicesController {
       return res.status(200).send(data);
     } catch (error) {
       res.status(400).send({ error });
+    }
+  }
+
+  public static async createResource(req: Request, res: Response) {
+    const { access_token, resources, data } = req.body;
+    try {
+      const { data: newData } = await FortnoxServices.create(
+        access_token,
+        resources,
+        data
+      );
+
+      res.status(200).send({ data: newData, total: 1 });
+    } catch (error) {
+      res.status(403).send({ error });
+    }
+  }
+
+  public static async updateResource(req: Request, res: Response) {
+    const { access_token, resources, data, id } = req.body;
+    try {
+      const { data: updatedData } = await FortnoxServices.update(
+        access_token,
+        resources,
+        data,
+        { id }
+      );
+
+      res.status(200).send({ data: updatedData, total: 1 });
+    } catch (error) {
+      res.status(403).send({ error });
     }
   }
 

@@ -14,11 +14,11 @@ class WooCommerceController {
       date_to,
     } = req.body;
 
-    const page = req.body.page ?? 5;
+    const page = req.body.page ?? 1;
     const perPage = req.body.per_page ?? 5;
 
     try {
-      if (resources === "orders") {
+      if (resources === "Orders") {
         const { data, headers } = await WooCommerceService.getOrders(
           storefront_url,
           consumer_key,
@@ -40,7 +40,9 @@ class WooCommerceController {
           "X-Total-Count": total,
           "Content-Range": `${resources}:${page}-${perPage}/${total}`,
         });
-        res.status(200).send(data);
+        res.status(200).send({ data, total: data.length });
+      } else {
+        throw new Error(`Unsupported WooCommerce resource: ${resources}`);
       }
     } catch (error) {
       res.status(500).send(error);

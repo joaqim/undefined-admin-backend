@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && nodemon ./dist/server.js",
-    "dev": "tsc --watch & export DEBUG=1 && nodemon ./dist/server.js"
+    "dev": "tsc --watch & export DEBUG=1 && nodemon ./dist/server.js",
+    "dev:quiet": "tsc --watch & nodemon ./dist/server.js"
   },
   "dependencies": {
     "@woocommerce/woocommerce-rest-api": "^1.0.1",

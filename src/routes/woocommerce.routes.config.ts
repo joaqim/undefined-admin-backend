@@ -11,12 +11,13 @@ export class WooCommerceRoutes extends CommonRoutesConfig {
   configureRoutes(): Application {
     this.app
       .route("/woo/:resources/:id?")
+      .get(wooCommerceMiddleware.extractParams)
       .all(
         wooCommerceMiddleware.validateRequiredParams,
         wooCommerceMiddleware.validateValidResource,
-        wooCommerceMiddleware.validateAuthKeyParams,
+        wooCommerceMiddleware.validateAuthKeyParams
       )
-      .post(WooCommerceController.getResources);
+      .get(WooCommerceController.getResources);
     return this.app;
   }
 }
