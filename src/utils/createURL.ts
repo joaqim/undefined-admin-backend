@@ -1,4 +1,4 @@
-import { Resources } from "../fortnox/interfaces/resources.interface";
+import { Resources } from "../interfaces/fortnox/resources.interface";
 
 const FortnoxApiResourceLookup: Record<Resources, string> = {
   Invoice: "invoices",

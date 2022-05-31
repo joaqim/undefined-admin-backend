@@ -8,6 +8,7 @@ export const FORTNOX_API_URL = "https://api.fortnox.se/3";
 
 export const FORTNOX_DEFAULT_HEADERS = {
   "Client-Secret": FORTNOX_CLIENT_SECRET,
+  "Access-Control-Allow-Origin": "*",
   "Content-Type": "application/json",
   Accept: "application/json",
 };

@@ -1,9 +1,7 @@
-import { CommonRoutesConfig } from "../common/common.routes.config";
-import { Application, NextFunction, Request, Response } from "express";
-import InvoicesController from "./controllers/FortnoxController";
-import fortnoxMiddleware from "./middleware/fortnox.middleware";
-import TokenService from "./services/token.service";
-import FortnoxController from "./controllers/FortnoxController";
+import { CommonRoutesConfig } from "../../common/common.routes.config";
+import { Application, Request, Response } from "express";
+import fortnoxMiddleware from "../../middleware/fortnox.middleware";
+import FortnoxController from "../../controllers/fortnox/FortnoxController";
 
 export class FortnoxRoutes extends CommonRoutesConfig {
   constructor(app: Application) {
@@ -18,22 +16,21 @@ export class FortnoxRoutes extends CommonRoutesConfig {
       .all(fortnoxMiddleware.validateAuthenticationCode)
       .post(FortnoxController.token);
 
-    this.app.param(`id`, fortnoxMiddleware.extractParamID);
-    this.app.param(`resources`, fortnoxMiddleware.extractParamResources);
-    this.app.param(`action`, fortnoxMiddleware.extractParamAction);
-
     this.app
       .route("/fortnox/:resources/:id?")
       .all(
+        fortnoxMiddleware.extractParams,
+        fortnoxMiddleware.validateValidResource,
         fortnoxMiddleware.validateAccessToken,
-        fortnoxMiddleware.validateResourceExists,
-        fortnoxMiddleware.validatePagination
+        fortnoxMiddleware.validateResourceExists
       )
-      .post(FortnoxController.listResources);
+      .post(FortnoxController.getResources);
 
     this.app
       .route("/fortnox/:resources/:id/:action")
       .all(
+        fortnoxMiddleware.extractParams,
+        fortnoxMiddleware.validateValidResource,
         fortnoxMiddleware.validateAccessToken,
         fortnoxMiddleware.validateResourceExists
       )

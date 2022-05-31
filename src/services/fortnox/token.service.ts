@@ -10,7 +10,7 @@ class TokenService {
     "https://apps.fortnox.se/oauth-v1/token";
 
   public static async axiosRequest(
-    code: string,
+    codeOrToken: string,
     grantType: "authorization_code" | "refresh_token",
     redirectUri: string
   ): Promise<AxiosResponse<any>> {
@@ -19,10 +19,10 @@ class TokenService {
     });
 
     if (grantType === "authorization_code") {
-      params.append("code", code);
+      params.append("code", codeOrToken);
       params.append("redirect_uri", redirectUri);
     } else {
-      params.append("refresh_token", code);
+      params.append("refresh_token", codeOrToken);
     }
 
     return await Axios({
