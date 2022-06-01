@@ -6,7 +6,7 @@ import {
   ValidResources,
 } from "../interfaces/fortnox/resources.interface";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
-import FortnoxServices from "../services/fortnox/fortnox.service";
+import FortnoxServices from "../services/fortnox.service";
 
 const { FORTNOX_REDIRECT_URI } = process.env;
 

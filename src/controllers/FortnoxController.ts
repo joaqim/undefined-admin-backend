@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 
 import debug from "debug";
-import FortnoxServices from "../../services/fortnox/fortnox.service";
-import TokenService from "../../services/fortnox/token.service";
+import FortnoxServices from "../services/fortnox.service";
+import TokenService from "../services/token.service";
 import { Article, Customer, Invoice } from "findus";
 import {
   ListResources,
   Resources,
-} from "../../interfaces/fortnox/resources.interface";
+} from "../interfaces/fortnox/resources.interface";
 
-import rateLimiter from "../../utils/RateLimiter";
+import rateLimiter from "../utils/RateLimiter";
 
 const log: debug.IDebugger = debug("app:invoices-controller");
 class InvoicesController {

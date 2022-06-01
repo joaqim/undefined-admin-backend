@@ -1,8 +1,8 @@
 import Axios, { AxiosRequestConfig, Method } from "axios";
-import { FORTNOX_API_URL, FORTNOX_DEFAULT_HEADERS } from "../../common";
-import { Resources } from "../../interfaces/fortnox/resources.interface";
-import createURL from "../../utils/createURL";
-import { FortnoxMetaInformation } from "../../utils/fortnoxUtils";
+import { FORTNOX_API_URL, FORTNOX_DEFAULT_HEADERS } from "../common";
+import { Resources } from "../interfaces/fortnox/resources.interface";
+import createURL from "../utils/createURL";
+import { FortnoxMetaInformation } from "../utils/fortnoxUtils";
 
 class FortnoxServices {
   private static async axios(

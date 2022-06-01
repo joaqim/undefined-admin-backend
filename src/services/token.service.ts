@@ -1,6 +1,6 @@
 import Axios, { AxiosPromise, AxiosResponse } from "axios";
 import { URLSearchParams } from "url";
-import authHeader from "../../utils/authHeader";
+import authHeader from "../utils/authHeader";
 
 const { FORTNOX_CLIENT_ID, FORTNOX_CLIENT_SECRET, FORTNOX_REDIRECT_URI } =
   process.env;

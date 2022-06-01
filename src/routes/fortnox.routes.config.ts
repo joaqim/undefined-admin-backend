@@ -1,7 +1,7 @@
 import { CommonRoutesConfig } from "../common/common.routes.config";
 import { Application, Request, Response } from "express";
 import fortnoxMiddleware from "../middleware/fortnox.middleware";
-import FortnoxController from "../controllers/fortnox/FortnoxController";
+import FortnoxController from "../controllers/FortnoxController";
 
 export class FortnoxRoutes extends CommonRoutesConfig {
   constructor(app: Application) {

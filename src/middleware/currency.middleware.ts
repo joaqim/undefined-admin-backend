@@ -6,7 +6,7 @@ class CurrencyMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    let { currency, date_to, date_from } = req.body;
+    const { currency, date_to, date_from } = req.body;
 
     if (!currency) {
       return res.status(400).send({ error: "Param `currency` is missing" });
