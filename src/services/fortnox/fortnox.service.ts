@@ -1,18 +1,19 @@
-import Axios from "axios";
+import Axios, { AxiosRequestConfig, Method } from "axios";
 import { FORTNOX_API_URL, FORTNOX_DEFAULT_HEADERS } from "../../common";
 import { Resources } from "../../interfaces/fortnox/resources.interface";
 import createURL from "../../utils/createURL";
 import { FortnoxMetaInformation } from "../../utils/fortnoxUtils";
 
 class FortnoxServices {
-  private static async get(
+  private static async axios(
     accessToken: string,
     resources: Resources,
+    config: AxiosRequestConfig & { method: Method },
     params?: any
   ) {
     const url = createURL(FORTNOX_API_URL, resources, params);
     return await Axios({
-      method: "GET",
+      ...config,
       url,
       headers: {
         ...FORTNOX_DEFAULT_HEADERS,
@@ -20,6 +21,26 @@ class FortnoxServices {
       },
     });
   }
+  private static get = async (
+    accessToken: string,
+    resources: Resources,
+    params?: any
+  ) => this.axios(accessToken, resources, { method: "GET" }, params);
+
+  private static put = async (
+    accessToken: string,
+    resources: Resources,
+    data: any,
+    params?: any
+  ) => this.axios(accessToken, resources, { method: "PUT", data }, params);
+
+  private static post = async (
+    accessToken: string,
+    resources: Resources,
+    data: any,
+    params?: any
+  ) => this.axios(accessToken, resources, { method: "POST", data }, params);
+
   public static async getOne<TResource = unknown>(
     accessToken: string,
     resources: Resources,
@@ -36,6 +57,7 @@ class FortnoxServices {
   ) {
     const { data } = await this.get(accessToken, resources, params);
     const meta = data["MetaInformation"] as FortnoxMetaInformation;
+    console.log({meta})
 
     return { data: data[resources] as TResource[], meta };
   }
@@ -46,17 +68,7 @@ class FortnoxServices {
     data: TResource,
     params: { id: string }
   ) {
-    const url = createURL(FORTNOX_API_URL, resources, params);
-
-    return await Axios({
-      method: "PUT",
-      url,
-      data,
-      headers: {
-        ...FORTNOX_DEFAULT_HEADERS,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    return this.put(accessToken, resources, data, params);
   }
 
   public static async create<TResource = Partial<unknown>>(
@@ -64,17 +76,7 @@ class FortnoxServices {
     resources: Resources,
     data: TResource
   ) {
-    const url = createURL(FORTNOX_API_URL, resources);
-
-    return await Axios({
-      method: "POST",
-      url,
-      data,
-      headers: {
-        ...FORTNOX_DEFAULT_HEADERS,
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    return this.post(accessToken, resources, data);
   }
 
   /*

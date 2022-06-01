@@ -9,6 +9,12 @@ class WooCommerceMiddleware {
   public async extractParams(req: Request, res: Response, next: NextFunction) {
     const { resources, id } = req.params;
 
+    const { consumer_key, consumer_secret, storefront_url } = req.query;
+
+    req.body.consumer_key = consumer_key;
+    req.body.consumer_secret = consumer_secret;
+    req.body.storefront_url = storefront_url;
+
     req.body.id = id;
     req.body.resources = capitalizeFirstLetter(resources);
 

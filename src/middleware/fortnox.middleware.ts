@@ -26,13 +26,13 @@ class FortnoxMiddleware {
 
     const resources = capitalizeFirstLetter(req.params.resources) as Resources;
 
-    const id = req.params.id
+    const id = req.params.id;
     // Renames "Invoices" to "Invoice" if it is a request with specific ID
     req.body.resources = id ? singularResource(resources) : resources;
     req.body.id = id;
 
-    console.log({ params: req.params });
-    console.log({ body: req.body });
+    /* console.log({ params: req.params });
+    console.log({ body: req.body }); */
     next();
   }
 
@@ -41,7 +41,10 @@ class FortnoxMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    const { resources, id, data } = req.body;
+    const { id, data } = req.body;
+    req.body.resources = singularResource(req.body.resources);
+    const resources = req.body.resources;
+
     if (!id) {
       return res
         .status(400)
@@ -67,25 +70,35 @@ class FortnoxMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    const { resources, id, data } = req.body;
+    const { id, data } = req.body;
+    req.body.resources = singularResource(req.body.resources);
+    const resources = req.body.resources;
+    try {
+      if (id) {
+        throw new Error(`Unexpected param 'id' while creating ${resources}`);
+      }
 
-    if (id) {
-      return res
-        .status(400)
-        .send({ error: `Unexpecte param 'id' for creating ${resources}` });
+      if (!data) {
+        throw new Error(`Param 'data' missing while creating ${resources}`);
+      }
+
+      if (!data[resources]) {
+        throw new Error(
+          `Invalid 'data' for creating ${resources}, expected: 'data: {"${resources}": {...}}'`
+        );
+      }
+
+      if (resources === "Invoice") {
+        if (!data[resources].CustomerNumber) {
+          throw new Error(`Invoice is missing 'CustomerNumber' while creating new Invoice`);
+        }
+      } else if (resources === "Customers") {
+
+      }
+    } catch (error) {
+      return res.status(400).send({ error });
     }
 
-    if (!data) {
-      return res
-        .status(400)
-        .send({ error: `Param 'data' missing for creating ${resources}` });
-    }
-
-    if (!data[resources]) {
-      return res.status(400).send({
-        error: `Invalid 'data' for creating ${resources}, expected: 'data: {"${resources}": {...}}'`,
-      });
-    }
     next();
   }
 

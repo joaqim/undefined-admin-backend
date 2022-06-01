@@ -10,7 +10,6 @@ import {
 } from "../../interfaces/fortnox/resources.interface";
 
 import rateLimiter from "../../utils/RateLimiter";
-import { arrayBuffer } from "stream/consumers";
 
 const log: debug.IDebugger = debug("app:invoices-controller");
 class InvoicesController {
@@ -41,9 +40,9 @@ class InvoicesController {
   }
 
   public static getResources = async (req: Request, res: Response) => {
-    const { access_token, resources, page, limit, id, filter, order, sort } =
+    const { access_token, resources, page, perPage, limit, id, filter, order, sort } =
       req.body;
-    // await rateLimiter.SleepAsNeeded();
+    await rateLimiter.SleepAsNeeded();
 
     if (!ListResources.includes(resources)) {
       const data = await FortnoxServices.getOne(access_token, resources, {
@@ -58,7 +57,7 @@ class InvoicesController {
       {
         id,
         page,
-        limit,
+        limit: 50,
       }
     );
 
@@ -67,7 +66,7 @@ class InvoicesController {
 
   public static async token(req: Request, res: Response) {
     let { code, refresh_token, grant_type, redirect_uri } = req.body;
-    // await rateLimiter.SleepAsNeeded();
+     await rateLimiter.SleepAsNeeded();
     try {
       const { data } = await TokenService.axiosRequest(
         code ?? refresh_token,
