@@ -39,7 +39,25 @@ class FortnoxServices {
     resources: Resources,
     data: any,
     params?: any
-  ) => this.axios(accessToken, resources, { method: "POST", data }, params);
+  ) => {
+    let axiosConf: AxiosRequestConfig & { method: Method } = {
+      method: "POST",
+      data,
+    };
+
+    if (resources === "Inbox") {
+      // Expects 'data' to be binary data of PDF
+      let buffer = Buffer.from(data);
+      axiosConf.headers = {
+        "Cache-Control": "public",
+        "Content-Type": "application/pdf",
+        "Content-Length": buffer.length,
+        "Content-Transfer-Encoding": "binary",
+        "Accept-Ranges": "bytes",
+      };
+    }
+    return this.axios(accessToken, resources, axiosConf, params);
+  };
 
   public static async getOne<TResource = unknown>(
     accessToken: string,
@@ -57,7 +75,7 @@ class FortnoxServices {
   ) {
     const { data } = await this.get(accessToken, resources, params);
     const meta = data["MetaInformation"] as FortnoxMetaInformation;
-    console.log({meta})
+    console.log({ meta });
 
     return { data: data[resources] as TResource[], meta };
   }

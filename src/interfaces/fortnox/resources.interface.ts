@@ -5,6 +5,7 @@ export const ValidResources = [
   "Article",
   "Customers",
   "Customer",
+  "Inbox",
 ] as const;
 
 export const ListResources = ["Invoices", "Articles", "Customers"] as const;
@@ -20,6 +21,7 @@ const resourceSingleLookup: Record<Resources, Resources> = {
   Article: "Article",
   Customers: "Customer",
   Customer: "Customer",
+  Inbox: "Inbox"
 };
 
 export const singularResource = (resources: Resources): Resources =>

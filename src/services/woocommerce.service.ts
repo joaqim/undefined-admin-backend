@@ -1,5 +1,6 @@
 const WooCommerceRestApi = require("@woocommerce/woocommerce-rest-api").default;
 
+import { WcOrder, WcOrders } from "findus";
 import { Resources } from "../interfaces/woocommerce/resources.interface";
 
 export interface WooGetManyParams {
@@ -17,14 +18,16 @@ export interface WooGetOneParams {
   status: string;
 }
 
+type WooHeaders = Record<"x-wp-total", number | string>;
+
 class WooCommerceService {
-  private static async get(
+  private static async get<TWooResource extends {}>(
     resources: Resources,
     storeUrl: string,
     consumerKey: string,
     consumerSecret: string,
     params: WooGetManyParams | WooGetOneParams
-  ) {
+  ): Promise<{ data: TWooResource; headers: WooHeaders }> {
     const api = new WooCommerceRestApi({
       url: storeUrl,
       consumerKey,
@@ -44,6 +47,8 @@ class WooCommerceService {
         date_from: dateFrom,
         status,
       });
+    } else {
+      throw new Error(`Unsupported WooCommerce resource: '${resources}'`);
     }
   }
 
@@ -52,8 +57,8 @@ class WooCommerceService {
     consumerKey: string,
     consumerSecret: string,
     params: WooGetManyParams
-  ) => {
-    return await this.get(
+  ): Promise<{ data: WcOrder[]; headers: WooHeaders }> => {
+    return await this.get<WcOrder[]>(
       "Orders",
       storeUrl,
       consumerKey,

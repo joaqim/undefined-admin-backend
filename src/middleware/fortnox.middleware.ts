@@ -7,13 +7,14 @@ import {
 } from "../interfaces/fortnox/resources.interface";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import FortnoxServices from "../services/fortnox.service";
+import { isYieldExpression } from "typescript";
 
 const { FORTNOX_REDIRECT_URI } = process.env;
 
 const log: debug.IDebugger = debug("app:fortnox-middleware");
 class FortnoxMiddleware {
   public async extractQuery(req: Request, res: Response, next: NextFunction) {
-    const { access_token, page, perPage, limit, filter } = req.query;
+    const { access_token, page, perPage, limit, filter, path } = req.query;
 
     req.body.access_token = access_token;
     req.body.page = page ?? 1;
@@ -23,6 +24,7 @@ class FortnoxMiddleware {
     req.body.per_page = req.body.limit;
 
     req.body.filter = filter;
+    req.body.path = path;
 
     const resources = capitalizeFirstLetter(req.params.resources) as Resources;
 
@@ -70,7 +72,7 @@ class FortnoxMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    const { id, data } = req.body;
+    const { id, data, path } = req.body;
     req.body.resources = singularResource(req.body.resources);
     const resources = req.body.resources;
     try {
@@ -84,16 +86,22 @@ class FortnoxMiddleware {
 
       if (!data[resources]) {
         throw new Error(
-          `Invalid 'data' for creating ${resources}, expected: 'data: {"${resources}": {...}}'`
+          `Invalid object 'data' for creating ${resources}, expected: 'data: {"${resources}": {...}}'`
         );
       }
 
       if (resources === "Invoice") {
         if (!data[resources].CustomerNumber) {
-          throw new Error(`Invoice is missing 'CustomerNumber' while creating new Invoice`);
+          throw new Error(
+            `Invoice is missing 'CustomerNumber' while creating new Invoice`
+          );
         }
       } else if (resources === "Customers") {
-
+      } else if (resources === "Inbox") {
+        if (!path)
+          throw new Error(
+            "Missing param 'path' for new file creation in Fortnox 'Inbox'"
+          );
       }
     } catch (error) {
       return res.status(400).send({ error });

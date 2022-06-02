@@ -9,11 +9,24 @@ class WooCommerceMiddleware {
   public async extractParams(req: Request, res: Response, next: NextFunction) {
     const { resources, id } = req.params;
 
-    const { consumer_key, consumer_secret, storefront_url } = req.query;
+    const {
+      consumer_key,
+      consumer_secret,
+      storefront_url,
+      storefront_prefix,
+      status,
+      date_from,
+      date_to,
+    } = req.query;
 
     req.body.consumer_key = consumer_key;
     req.body.consumer_secret = consumer_secret;
     req.body.storefront_url = storefront_url;
+    req.body.storefront_prefix = storefront_prefix;
+
+    req.body.status = status;
+    req.body.date_from = status;
+    req.body.date_to = status;
 
     req.body.id = id;
     req.body.resources = capitalizeFirstLetter(resources);
@@ -42,7 +55,7 @@ class WooCommerceMiddleware {
     res: Response,
     next: NextFunction
   ) {
-    const { consumer_key, consumer_secret, storefront_url, resources } =
+    const { consumer_key, consumer_secret, storefront_url, storefront_prefix ,resources } =
       req.body;
 
     if (!resources) {
@@ -53,6 +66,11 @@ class WooCommerceMiddleware {
       return res
         .status(400)
         .send({ error: "Param `storefront_url` is missing" });
+    }
+    if (!storefront_url) {
+      return res
+        .status(400)
+        .send({ error: "Param `storefront_prefix` is missing" });
     }
 
     if (!consumer_key) {

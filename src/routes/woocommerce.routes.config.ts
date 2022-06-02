@@ -11,8 +11,8 @@ export class WooCommerceRoutes extends CommonRoutesConfig {
   configureRoutes(): Application {
     this.app
       .route("/woo/:resources/:id?")
-      .get(wooCommerceMiddleware.extractParams)
       .all(
+        wooCommerceMiddleware.extractParams,
         wooCommerceMiddleware.validateRequiredParams,
         wooCommerceMiddleware.validateValidResource,
         wooCommerceMiddleware.validateAuthKeyParams

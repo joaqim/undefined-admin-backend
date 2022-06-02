@@ -7,6 +7,7 @@ const FortnoxApiResourceLookup: Record<Resources, string> = {
   Articles: "articles",
   Customer: "customers",
   Customers: "customers",
+  Inbox: "inbox",
 };
 
 const createURL = (
